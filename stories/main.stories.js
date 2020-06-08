@@ -11,15 +11,15 @@ let A = ({ children, testA }) => <div style={ style }><Drop onDrop={ console.log
 let B = ({ children, testB }) => <div style={ style }><Drop onDrop={ console.log }><p>B { testB || '1' }</p></Drop>{ children }</div>
 let components = {A, B};
 
-let String = ({ children, value, onChange, label }) => 
+let StringInput = ({ children, value, onChange, label }) => 
     <div style={ style }>
         <div>{label}</div>
         <div>
             <input value={value} onChange={e => onChange(e.target.value)} style={{ width: 80 }}/>
         </div>
     </div>
-let Boolean = ({ children, value, onChange, label }) => <div style={ style }>{label}<input type="checkbox" value={String(value)} onChange={e => onChange(e.target.checked)}/></div>
-let inputs = {String, Boolean};
+let BooleanInput = ({ children, value, onChange, label }) => <div style={ style }>{label}<input type="checkbox" value={String(value)} onChange={e => onChange(e.target.checked)}/></div>
+let inputs = {String: StringInput, Boolean: BooleanInput};
 class EditorStory extends React.Component{
     constructor(props){
         super(props);
