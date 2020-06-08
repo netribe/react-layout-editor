@@ -1,3 +1,5 @@
+// test
+
 import React from 'react';
 import ReactLayoutEditor from '../source';
 import Drop from '../source/Drop.jsx';
@@ -26,7 +28,7 @@ class EditorStory extends React.Component{
                 id: '1',
                 type: 'A',
                 layout: {
-                    
+
                 },
                 props: {
                     textA: 'sdf'
