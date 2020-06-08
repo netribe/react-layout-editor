@@ -25,6 +25,12 @@ class EditorStory extends React.Component{
             value: {
                 id: '1',
                 type: 'A',
+                layout: {
+                    
+                },
+                props: {
+                    textA: 'sdf'
+                },
                 children: [
                     {
                         id: '2',
