@@ -21,12 +21,10 @@ export default {
     component: Input,
     decorators: [
         withKnobs, 
-        story => <div style={ wrap }>{story()}</div>
+        story => <div style={ wrap }>{ story() }</div>
     ] 
 };
 
-
-export const input = () => <Input />;
 
 export const WithAction = () => {
 
@@ -44,7 +42,6 @@ export const WithAction = () => {
     return (
         <Input 
             label={ text('Label', 'Input Label') }
-            isChecked={ text('Label', 'Input Label') }
             name={ text('Name', 'Input Name') }
             onChange={ action('onChange') }
             description={ text('Description', 'Input description') }
