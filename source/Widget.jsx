@@ -17,8 +17,9 @@ class DropZone extends React.PureComponent{
         let {editor, pathKey} = this.props;
         let isHovered = editor.hovered === pathKey;
         let isSelected = editor.selected === pathKey;
+        let isDraggedOver = editor.draggedOver === pathKey;
         return (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: isSelected ? '2px solid #2a2' : isHovered ? '2px solid #22a' : 0, pointerEvents: 'none'}}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isHovered ? '2px solid #22a' : 0, pointerEvents: 'none'}}>
 
             </div>
         );
@@ -59,15 +60,25 @@ export default class Widget extends React.PureComponent{
         editor.onHover((path || []).join('/'));
     };
     onDragOver = (e) => {
-        let { editor } = this.props;
+        let { editor, onDragOver } = this.props;
         e.preventDefault();
         e.stopPropagation();
-        editor.onHover(this.key);
+        onDragOver(this.key, e, this.el);
+        editor.onDrag(this.key);
     };
     onClick = (e) => {
         let { editor, value } = this.props;
         e.stopPropagation();
         editor.onSelect(this.key, value);
+    };
+    onDragOverChild = (childKey, e, target) => {
+        let { value, onDragOver } = this.props;
+        if(value?.type === 'layout'){
+            this.component.onDragOver(childKey, e, target);
+        }
+        else{
+            onDragOver(childKey, e);
+        }
     };
     // onChildChange = (newChild, oldChild) => {
     //     let { value, onChange } = this.props;
@@ -85,6 +96,11 @@ export default class Widget extends React.PureComponent{
     render(){
         let { value, components, editors, editor, path } = this.props;
         let Component = components[value.type];
+        if(!Component){
+            return (
+                <div>Component "{value.type}" is missing</div>
+            );
+        }
         let children = (value.children || []).map(child => 
             <Widget 
                 key={ child.id }
@@ -93,13 +109,14 @@ export default class Widget extends React.PureComponent{
                 editors={ editors }
                 editor={ editor }
                 path={ this.path }
+                onDragOver={this.onDragOverChild}
                 onChange={ newChild => this.onChildChange(newChild, child) }
             />
         )
         
         return (
             <>
-                <Component { ...value.props }>
+                <Component { ...value.props } ref={ el => this.component = el }>
                     {children}
                 </Component>
                 {

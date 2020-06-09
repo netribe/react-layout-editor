@@ -3,13 +3,14 @@
 import React from 'react';
 import ReactLayoutEditor from '../source';
 import Drop from '../source/Drop.jsx';
+import FlexLayout from '../source/FlexLayout.jsx';
 //hello
 export default { title: 'ReactEditor' };
 
 let style = { border: '1px solid #ddd', padding: 10}
 let A = ({ children, testA }) => <div style={ style }><Drop onDrop={ console.log }><p>A { testA || '1' }</p></Drop>{ children }</div>
 let B = ({ children, testB }) => <div style={ style }><Drop onDrop={ console.log }><p>B { testB || '1' }</p></Drop>{ children }</div>
-let components = {A, B};
+let components = {A, B, layout: FlexLayout};
 
 let StringInput = ({ children, value, onChange, label }) => 
     <div style={ style }>
@@ -26,21 +27,30 @@ class EditorStory extends React.Component{
         this.state = {
             value: {
                 id: '1',
-                type: 'A',
-                layout: {
-
-                },
+                type: 'layout',
                 props: {
-                    textA: 'sdf'
+
                 },
                 children: [
                     {
-                        id: '2',
-                        type: 'B',
+                        id: '1',
+                        type: 'A',
+                        layout: {
+                            
+                        },
+                        props: {
+                            textA: 'sdf'
+                        },
                         children: [
                             {
-                                id: '3',
-                                type: 'B'
+                                id: '2',
+                                type: 'B',
+                                children: [
+                                    {
+                                        id: '3',
+                                        type: 'B'
+                                    }
+                                ]
                             }
                         ]
                     }

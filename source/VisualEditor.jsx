@@ -7,6 +7,7 @@ export default class VisualEditor extends React.PureComponent{
         this.listeners = {};
         this.hovered = null;
         this.selected = null;
+        this.draggedOver = null;
     }
     componentDidMount(){
         this.el.addEventListener('dragleave', this.onDragLeave, false);
@@ -16,7 +17,7 @@ export default class VisualEditor extends React.PureComponent{
     }
     onDragLeave = (e) => {
         if(!this.el.contains(e.relatedTarget)){
-            this.onHover();
+            this.onDrag(null);
         }
     };
     onHover = (key) => {
@@ -36,6 +37,14 @@ export default class VisualEditor extends React.PureComponent{
         a && a();
         b && b();
         onSelect && onSelect(key, value);
+    };
+    onDrag = (key, value) => {
+        if(this.draggedOver === key){ return; }
+        let a = this.listeners[this.draggedOver];
+        let b = this.listeners[key];
+        this.draggedOver = key;
+        a && a();
+        b && b();
     };
     bind = (key, cb) => {
         this.listeners[key] = cb;
