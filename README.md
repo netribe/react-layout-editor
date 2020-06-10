@@ -72,5 +72,5 @@ Inputs are used to edit the props of a widget.
 * [/]Select
     - [x] options
     - renderItem?
-* [] Color Picker
-* [] Font (Select + renderItem)
+* [ ] Color Picker
+* [ ] Font (Select + renderItem)
