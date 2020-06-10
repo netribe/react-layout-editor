@@ -1,37 +1,46 @@
-import React, { PureComponent, Component } from 'react';
+import React, { PureComponent } from 'react';
 import './switch.scss'
 
 class Input extends PureComponent{
     constructor(props) {
         super(props);
         this.state = {
-            value: props.value,
+            value: undefined,
             isChecked: false
         };
     }
 
     componentDidMount() {
         const { type, value } = this.props;
+        if (typeof value != 'undefined') {
+            if (typeof value == 'boolean') this.setState({ isChecked: value })
+            else this.setState({ value })
+        }
         
     }
 
-    onChange = (type, event) => {
-        if (type === 'switch') {
-            let isChecked = !this.state.isChecked;
-            this.setState({ isChecked  })
-            if (this.props.onChange) this.props.onChange(event, isChecked)
+    onChange = (event) => {
+        const { type } = this.props;
+        const isBoolean = type == 'Boolean';
+        const isNumber = type == 'Number';
+
+        let value = event.target.value;
+        if (isBoolean) {
+            value = !this.state.isChecked;
+            this.setState({ isChecked: value  })
 
         } else {
-            this.setState({ value: event.target.value })
-            if (this.props.onChange) this.props.onChange(event, event.target.value)
+            if (isNumber && !Number(value)) return;
+            this.setState({ value })
         }
+        if (this.props.onChange) this.props.onChange(event, value)
     }
 
     renderInput = type => {
         switch (type) {
             case 'Select':
                 return (
-                    <select name={ this.props.name  } >
+                    <select style={ styles.input } name={ this.props.name  } onChange={ this.onChange } value={ this.state.value }>
                         {
                             this.props.options.map((opt, idx) => <option key={ idx } value={ opt } >{ opt.toUpperCase()  }</option>)
                         }
@@ -40,8 +49,8 @@ class Input extends PureComponent{
             
             case 'Boolean':
                 return (
-                    <label className={'switch'} style={{ boxShadow: '0px 3px 6px -4px rgba(0,0,0,0.5)' }}> 
-                        <input checked={ this.state.sisChecked } type={ 'checkbox' } onChange={ e => { this.onChange('switch', e) } } />
+                    <label className={'switch'} style={ styles.input }> 
+                        <input checked={ this.state.sisChecked } type={ 'checkbox' } onChange={ this.onChange } />
                         <span className={ 'slider' }></span>
                     </label>
                 ) 
@@ -50,8 +59,8 @@ class Input extends PureComponent{
                     <input
                         type={'text'}
                         name={ this.props.name }
-                        style={{ boxShadow: '0px 3px 6px -4px rgba(0,0,0,0.5)' }}
-                        onChange={ e => { this.onChange('input', e) }}
+                        style={ styles.input }
+                        onChange={ this.onChange }
                         value={this.state.value} />
                 )
             case 'Number':
@@ -59,27 +68,25 @@ class Input extends PureComponent{
                     <input
                         type={'number'}
                         name={ this.props.name }
-                        style={{ boxShadow: '0px 3px 6px -4px rgba(0,0,0,0.5)' }}
-                        onChange={ e => { this.onChange('input', e) }}
+                        style={ styles.input }
+                        onChange={ this.onChange }
                         value={this.state.value} />
                 )
             default:
                 return null;
         }
 
-
-        return input(inputType)
     }
 
     render() {
         let { type, style, name, label, description } = this.props;
         return (
             <div style={ styles.root }>
-                <label for={ name }>{ label }</label>
+                <label htmlFor={ name } style={{ marginBottom: 10 }}>{ label }</label>
                 {
                     this.renderInput(type)
                 }
-                <p>
+                <p style={ styles.descrpition } >
                     {description}
                 </p>
             </div>
@@ -94,6 +101,7 @@ Input.defaultProps = {
     label: 'Input Label',
     description: 'Input description'
 }
+
 const styles = {
     root: {
         display: 'flex',
@@ -101,8 +109,13 @@ const styles = {
         width: 'max-content',
         height: 'auto',
     },
+    input: {
+        boxShadow: '0px 3px 6px -5px rgba(0,0,0,0.25)'
+    },
     descrpition: {
-        margin: 0
+        margin: '10px 0 0 0',
+        color: '#017C8E'
     }
 }
+
 export default Input
