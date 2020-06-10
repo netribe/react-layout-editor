@@ -106,11 +106,13 @@ const styles = {
     root: {
         display: 'flex',
         flexDirection: 'column',
-        width: 'max-content',
         height: 'auto',
     },
     input: {
-        boxShadow: '0px 3px 6px -5px rgba(0,0,0,0.25)'
+        border: 0,
+        outline: 0,
+        padding: 10,
+        boxShadow: '0px 0px 10px -5px rgba(0,0,0,0.55)'
     },
     descrpition: {
         margin: '10px 0 0 0',
