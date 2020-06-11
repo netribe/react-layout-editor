@@ -11,7 +11,7 @@ class Input extends PureComponent{
     }
 
     componentDidMount() {
-        const { type, value } = this.props;
+        const { value } = this.props;
         if (typeof value != 'undefined') {
             if (typeof value == 'boolean') this.setState({ isChecked: value })
             else this.setState({ value })
@@ -20,20 +20,20 @@ class Input extends PureComponent{
     }
 
     onChange = (event) => {
-        const { type } = this.props;
+        const { type, onChange } = this.props;
         const isBoolean = type == 'Boolean';
         const isNumber = type == 'Number';
 
         let value = event.target.value;
+        
         if (isBoolean) {
             value = !this.state.isChecked;
             this.setState({ isChecked: value  })
-
         } else {
             if (isNumber && !Number(value)) return;
             this.setState({ value })
         }
-        if (this.props.onChange) this.props.onChange(event, value)
+        if (onChange) onChange(value)
     }
 
     renderInput = type => {
@@ -50,7 +50,7 @@ class Input extends PureComponent{
             case 'Boolean':
                 return (
                     <label className={'switch'} style={ styles.input }> 
-                        <input checked={ this.state.sisChecked } type={ 'checkbox' } onChange={ this.onChange } />
+                        <input checked={ this.state.isChecked } type={ 'checkbox' } onChange={ this.onChange } />
                         <span className={ 'slider' }></span>
                     </label>
                 ) 
@@ -86,9 +86,14 @@ class Input extends PureComponent{
                 {
                     this.renderInput(type)
                 }
-                <p style={ styles.descrpition } >
-                    {description}
-                </p>
+                {
+                    description && (
+                        <p style={styles.descrpition} >
+                            {description}
+                        </p>
+
+                    )
+                }
             </div>
         );
     }
@@ -99,7 +104,7 @@ Input.defaultProps = {
     value: undefined,
     onChange: e => { console.log('e.target ->', e.target) },
     label: 'Input Label',
-    description: 'Input description'
+    description: undefined
 }
 
 const styles = {
