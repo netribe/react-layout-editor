@@ -49,7 +49,7 @@ class Input extends PureComponent{
             
             case 'Boolean':
                 return (
-                    <label className={'switch'} style={ styles.input }> 
+                    <label className={'switch'} style={{ ...styles.input, padding: '0 10px', width: 30 }}> 
                         <input checked={ this.state.isChecked } type={ 'checkbox' } onChange={ this.onChange } />
                         <span className={ 'slider' }></span>
                     </label>
