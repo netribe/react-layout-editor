@@ -9,11 +9,12 @@ export default class PropsEditor extends React.PureComponent{
         return (
             <div style={{ height: '100%', width: '100%', position: 'relative', ...style }}>
                 {
-                    schema.map(item => {
+                    schema.map((item, i) => {
                         let Input = inputs[item.type];
                         if(Input){
                             return (
-                                <Input 
+                                <Input
+                                    key={i}
                                     onChange={ v => onChange({ ...value, [item.key]: v }) }
                                     value={ value[item.key] }
                                     label={ item.label }

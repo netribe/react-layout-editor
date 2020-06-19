@@ -10,30 +10,38 @@ export default class AddWidgetPanel extends React.PureComponent{
                     height: '100%',
                     width: '100%',
                     position: 'relative',
-                    display: 'flex',
-                    justifyContent: 'space-around',
-                    padding: '10px 0',
+                    overflow: 'auto',
                     ...style
                 }}>
-                {
-                    widgets.map((item, i) => {
-                        return (
-                            <Drag 
-                                data={item}
-                                key={i} 
-                                style={{ 
-                                    width: 40,
-                                    height: 40,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    border: '1px solid #ddd'
-                                    }}>
-                                { item.label }
-                            </Drag>
-                        );
-                    })
-                }
+                <div 
+                    style={{ 
+                        display: 'flex',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap',
+                        padding: '10px',
+                        ...style
+                    }}>
+                    {
+                        widgets.map((item, i) => {
+                            return (
+                                <Drag 
+                                    data={item.data}
+                                    key={i} 
+                                    style={{ 
+                                        width: 60,
+                                        height: 60,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid #ddd',
+                                        margin: 10,
+                                        }}>
+                                    { item.label }
+                                </Drag>
+                            );
+                        })
+                    }
+                </div>
             </div>
         );
     }

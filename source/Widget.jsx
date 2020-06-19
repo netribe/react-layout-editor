@@ -1,27 +1,44 @@
 import React from 'react';
 import ReactDom from 'react-dom';
+import utils from './utils';
 
-class DropZone extends React.PureComponent{
+class Placeholder extends React.Component{
+    constructor(props){
+        super(props);
+        this.id = props.id;
+    }
     componentDidMount(){
-        let {editor, pathKey} = this.props;
-        editor.bind(pathKey, this.update);
+        let {editor, id} = this.props;
+        editor.placeholders[id] = this;
+        editor.bind(this.id, this.update);
     }
     componentWillUnmount(){
-        let {editor, pathKey} = this.props;
-        editor.unbind(pathKey);
+        let {editor, id} = this.props;
+        editor.placeholders[id] = null;
     }
     update = () => {
         this.forceUpdate();
     };
+    getBox = () => {
+        this.box = this.refs.el.getBoundingClientRect();
+        return this.box;
+    };
     render(){
-        let {editor, pathKey} = this.props;
-        let isHovered = editor.hovered === pathKey;
-        let isSelected = editor.selected === pathKey;
-        let isDraggedOver = editor.draggedOver === pathKey;
+        let { style, direction = "vertical", children, editor, id, ...props } = this.props;
+        let isOpen = editor.activePlaceholder === id;
+        let s = {
+            background: 'red',
+            transition: '0.4s ease',
+            ...style
+        }
+        if(direction === 'vertical'){
+            s.height = isOpen ? 20 : 0;
+        }
+        else{
+            s.width = isOpen ? 20 : 0;
+        }
         return (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isHovered ? '2px solid #22a' : 0, pointerEvents: 'none'}}>
-
-            </div>
+            <div style={s} { ...props } ref="el">{children}</div>
         );
     }
 }
@@ -29,107 +46,144 @@ class DropZone extends React.PureComponent{
 export default class Widget extends React.PureComponent{
     constructor(props){
         super(props);
-        this.portal = document.createElement('div');
         this.path = (props.path || []).concat(props.value.id);
         this.key = this.path.join('/');
+        this.children = [];
+        this.state = {
+            error: null
+        };
     }
     componentDidMount(){
-        let el = ReactDom.findDOMNode(this);
-        let position = getComputedStyle(el).position;
-        if(position === 'static'){
-            el.style.position = 'relative';
-        }
-        el.appendChild(this.portal);
-        el.addEventListener('mouseenter', this.onMouseEnter, false);
-        el.addEventListener('mouseleave', this.onMouseLeave, false);
-        el.addEventListener('dragover', this.onDragOver, false);
-        el.addEventListener('click', this.onClick, false);
-        this.el = el;
+        let {editor} = this.props;
+        this.el = this.el || ReactDom.findDOMNode(this);
+        editor.bind(this.key, this.update);
+        this.box = this.el.getBoundingClientRect();
     }
     componentWillUnmount(){
-        this.el.removeEventListener('mouseenter', this.onMouseEnter, false);
-        this.el.removeEventListener('mouseleave', this.onMouseLeave, false);
-        this.el.removeEventListener('click', this.onClick, false);
+        let {editor} = this.props;
+        editor.unbind(this.key);
     }
+    componentDidCatch(error){
+        console.error(error);
+        this.setState({ error });
+    }
+    update = () => {
+        this.forceUpdate();
+    };
     onMouseEnter = (e) => {
         let { editor } = this.props;
         editor.onHover(this.key);
     };
     onMouseLeave = (e) => {
-        let { editor, path } = this.props;
-        editor.onHover((path || []).join('/'));
+        let { editor, parent } = this.props;
+        if(parent){
+            parent.onMouseEnter(e);
+        }
+        else{
+            editor.onHover(null);
+        }
     };
+    
     onDragOver = (e) => {
-        let { editor, onDragOver } = this.props;
+        let { editor } = this.props;
         e.preventDefault();
         e.stopPropagation();
-        onDragOver(this.key, e, this.el);
-        editor.onDrag(this.key);
+        return editor.onDragOver(this.key, {x: e.clientX, y: e.clientY});
+    };
+    onDragLeave = (e) => {
+        e.stopPropagation();
     };
     onClick = (e) => {
         let { editor, value } = this.props;
         e.stopPropagation();
         editor.onSelect(this.key, value);
     };
-    onDragOverChild = (childKey, e, target) => {
-        let { value, onDragOver } = this.props;
-        if(value?.type === 'layout'){
-            this.component.onDragOver(childKey, e, target);
-        }
-        else{
-            onDragOver(childKey, e);
-        }
-    };
-    // onChildChange = (newChild, oldChild) => {
-    //     let { value, onChange } = this.props;
-    //     let newChildren = (value.children || []).map(c => c === oldChild ? newChild : c);
-    //     this.onChildrenChange(newChildren);
-    // };
-    // onChildrenChange = (newChildren) => {
-    //     let { value, onChange } = this.props;
-    //     onChange({ ...value, children: newChildren });
-    // };
-    // onPropsChange = (newProps) => {
-    //     let { value, onChange } = this.props;
-    //     onChange({ ...value, props: newProps });
-    // };
     render(){
-        let { value, components, editors, editor, path } = this.props;
+        let { style, value, components, editor, parent, path, index, ...props } = this.props;
         let Component = components[value.type];
-        if(!Component){
+        let key = this.key;
+
+        if(this.state.error){
+            return (
+            <div style={{ color: 'red'}}>
+                <div>{this.state.error.toString()}</div>
+                <div>{this.state.error.stack.toString()}</div>
+            </div>
+            );
+        }
+        if(value.type && !Component){
             return (
                 <div>Component "{value.type}" is missing</div>
             );
         }
-        let children = (value.children || []).map(child => 
-            <Widget 
-                key={ child.id }
-                value={ child } 
-                components={ components } 
-                editors={ editors }
-                editor={ editor }
-                path={ this.path }
-                onDragOver={this.onDragOverChild}
-                onChange={ newChild => this.onChildChange(newChild, child) }
-            />
-        )
         
+        let isHovered = editor.hovered === key;
+        let isSelected = editor.selected === key;
+        let isDraggedOver = editor.draggedOver === key;
+        let children = [];
+        let lastIndex = (value.children || []).length + 1;
+        (value.children || []).map((child, i) => {
+            children.push(
+                <Placeholder 
+                    editor={ editor }
+                    id={ `${this.key}:${i}` }
+                    key={`placeholder-${i}`}/>)
+            children.push(
+                <Widget
+                    ref={ `child-${i}` }
+                    key={ child.id }
+                    index={i}
+                    value={ child } 
+                    components={ components } 
+                    editor={ editor }
+                    path={ this.path }
+                    parent={this}
+                />
+            );
+        });
+        children.push(
+            <Placeholder 
+                editor={ editor }
+                id={ `${this.key}:${lastIndex}` }
+                key={`placeholder-${lastIndex}`}/>)
         return (
-            <>
-                <Component { ...value.props } ref={ el => this.component = el }>
-                    {children}
-                </Component>
+            <div
+                ref={ el => this.el = el }
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+                onDragOver={this.onDragOver}
+                onDragLeave={this.onDragLeave}
+                onClick={this.onClick}
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    ...value.layout
+                }} 
+                { ...props }
+            >
                 {
-                    ReactDom.createPortal(
-                        <DropZone
-                            pathKey={this.key}
-                            editor={ editor }
-                        />,
-                        this.portal
-                    )
+                    Component ? (
+                        <Component { ...value.props }>
+                            {children}
+                        </Component>
+                    ) : children
                 }
-            </>
-            
+                
+                <div 
+                    style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isHovered ? '2px solid #22a' : 0,
+                        pointerEvents: 'none'}}>
+                            <div style={{ position: 'absolute', bottom: 0}}>
+                                {this.placeholderIndex}
+                            </div>
+                        </div>
+            </div>
         );
     }
 }

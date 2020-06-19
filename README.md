@@ -7,9 +7,9 @@ There are three seperate parts for the editor:
 1. the visual editor.
     - should have a "value" prop, all changes to the layout are done through this prop.
     - should have an "onChange" prop, changes to the layout from widget editors will trigger this function. 
-    - should have a "widgets" prop, an object of widget components. 
-    - should have a "editors" prop, an object of widget editor components that are displayed on hover over a widget. this prop will be empty in production.
-    - should have an "isEditor" prop, if true it should render the widget editors when a widget is hovered.
+    - should have a "components" prop, an object of widget components. 
+    - should have a "editors" prop, an object of widget editor components that are displayed on hover over a widget.
+    - should have a matching.
     - widget editors should be loaded externally and passed in props because they should not be loaded in production.
 2. the props editing panel
     - should have a set of inputs loaded externally and passed in props.
