@@ -20,7 +20,7 @@ class Placeholder extends React.Component{
         this.forceUpdate();
     };
     getBox = () => {
-        this.box = this.refs.el.getBoundingClientRect();
+        this.box = this.el.getBoundingClientRect();
         return this.box;
     };
     render(){
@@ -34,7 +34,14 @@ class Placeholder extends React.Component{
             ...style
         }
         return (
-            <div style={s} { ...props } ref="el">{children}</div>
+            <div 
+                style={s} {
+                 ...props }
+                 data-placeholder={id} 
+                 ref={el => this.el = el}
+            >
+                {children}
+            </div>
         );
     }
 }
@@ -117,7 +124,7 @@ export default class Layout extends React.PureComponent{
         let isHovered = editor.hovered === key;
         let isSelected = editor.selected === key;
         let isDraggedOver = editor.draggedOver === key;
-        let children;
+        let children = null;
         if(value.children){
             children = [];
             let lastIndex = value.children.length + 1;

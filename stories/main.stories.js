@@ -21,9 +21,6 @@ let B = ({ children, testB }) => {
                 </div>
                 {children[3] || null}
             </div>
-            <div style={{ display: 'flex'}}>
-                { children }
-            </div>
         </div>
     );
 }    
@@ -61,7 +58,13 @@ class EditorStory extends React.Component{
                             {
                                 id: '4',
                                 layout: {},
-                                type: 'B'
+                                type: 'B',
+                                children: [
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                                ]
                             }
                         ]
                     }
@@ -247,7 +250,7 @@ class EditorStory extends React.Component{
         };
     }
     render(){
-        let { value, widgets, schemas } = this.state;
+        let { value, widgets } = this.state;
         return (
             <div style={{ position: 'fixed', fontFamily: 'Ubuntu Mono', top: 0, left: 0, right: 0, bottom: 0 }}>
                 <ReactLayoutEditor 

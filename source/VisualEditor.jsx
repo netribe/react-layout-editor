@@ -14,7 +14,6 @@ export default class VisualEditor extends React.PureComponent{
         this.onDragOver = utils.throttle(this.onDragOver, 100);
     }
     componentDidMount(){
-        top.editor = this;
         this.el.addEventListener('dragleave', this.onDragLeave, false);
     }
     componentWillUnmount(){
@@ -176,7 +175,9 @@ export default class VisualEditor extends React.PureComponent{
             if(i === index){
                 newChildren.push(newChild);
             }
-            newChildren.push(child);
+            if(child){
+                newChildren.push(child);
+            }
         });
         if(index > newChildren.length - 1){
             newChildren.push(newChild);
@@ -212,6 +213,7 @@ export default class VisualEditor extends React.PureComponent{
     }
 
     render(){
+        top.editor = this;
         let { value, onChange, widgets, style } = this.props;
         return (
             <div 
