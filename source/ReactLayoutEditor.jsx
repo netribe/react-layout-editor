@@ -14,8 +14,8 @@ export default class ReactLayoutEditor extends React.PureComponent{
         };
     }
     onSelectComponent = (key, item) => {
-        let { components, schemas = {} } = this.props;
-        let schema = schemas[item.type] || components[item.type]?.schema;
+        let { widgets } = this.props;
+        let schema = (widgets.find(w => w.id === item.type) || {}).props;
         this.setState({
             selectedKey: key,
             selectedItem: item,
@@ -40,7 +40,7 @@ export default class ReactLayoutEditor extends React.PureComponent{
         onChange && onChange(newValue);
     };
     render(){
-        let { style, value, onChange, components, schemas, widgets, inputs } = this.props;
+        let { style, value, onChange, widgets, inputs } = this.props;
         let { selectedSchema, selectedItem } = this.state;
         return (
             <div style={{ height: '100%', width: '100%', position: 'relative', display: 'flex', ...style }}>
@@ -51,7 +51,7 @@ export default class ReactLayoutEditor extends React.PureComponent{
                     ref={ el => this.visualEditor = el }
                     value={ value } 
                     onChange={ onChange } 
-                    components={ components }
+                    widgets={ widgets }
                     onSelect={ this.onSelectComponent }
                 />
                 <div style={{ width: 200, borderLeft: '1px solid #ddd' }}>

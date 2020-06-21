@@ -25,7 +25,7 @@ export default class AddWidgetPanel extends React.PureComponent{
                         widgets.map((item, i) => {
                             return (
                                 <Drag 
-                                    data={item.data}
+                                    data={item.body}
                                     key={i} 
                                     style={{ 
                                         width: 60,

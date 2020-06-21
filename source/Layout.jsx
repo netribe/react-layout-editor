@@ -14,7 +14,7 @@ class Placeholder extends React.Component{
     }
     componentWillUnmount(){
         let {editor, id} = this.props;
-        editor.placeholders[id] = null;
+        delete editor.placeholders[id];
     }
     update = () => {
         this.forceUpdate();
@@ -24,18 +24,14 @@ class Placeholder extends React.Component{
         return this.box;
     };
     render(){
-        let { style, direction = "vertical", children, editor, id, ...props } = this.props;
+        let { style, children, editor, id, ...props } = this.props;
         let isOpen = editor.activePlaceholder === id;
         let s = {
             background: 'red',
             transition: '0.4s ease',
+            minWidth: isOpen ? 20 : 0,
+            minHeight: isOpen ? 20 : 0,
             ...style
-        }
-        if(direction === 'vertical'){
-            s.height = isOpen ? 20 : 0;
-        }
-        else{
-            s.width = isOpen ? 20 : 0;
         }
         return (
             <div style={s} { ...props } ref="el">{children}</div>
@@ -43,7 +39,7 @@ class Placeholder extends React.Component{
     }
 }
 
-export default class Widget extends React.PureComponent{
+export default class Layout extends React.PureComponent{
     constructor(props){
         super(props);
         this.path = (props.path || []).concat(props.value.id);
@@ -57,7 +53,7 @@ export default class Widget extends React.PureComponent{
         let {editor} = this.props;
         this.el = this.el || ReactDom.findDOMNode(this);
         editor.bind(this.key, this.update);
-        this.box = this.el.getBoundingClientRect();
+        this.box = this.el && this.el.getBoundingClientRect();
     }
     componentWillUnmount(){
         let {editor} = this.props;
@@ -72,14 +68,14 @@ export default class Widget extends React.PureComponent{
     };
     onMouseEnter = (e) => {
         let { editor } = this.props;
-        editor.onHover(this.key);
+        editor && editor.onHover(this.key);
     };
     onMouseLeave = (e) => {
         let { editor, parent } = this.props;
         if(parent){
             parent.onMouseEnter(e);
         }
-        else{
+        else if(editor){
             editor.onHover(null);
         }
     };
@@ -99,9 +95,10 @@ export default class Widget extends React.PureComponent{
         editor.onSelect(this.key, value);
     };
     render(){
-        let { style, value, components, editor, parent, path, index, ...props } = this.props;
-        let Component = components[value.type];
+        let { style, value, widgets, editor, parent, path, index, ...props } = this.props;
+        let Component = (widgets.find(widget => widget.id === value.type) || {}).component;
         let key = this.key;
+
 
         if(this.state.error){
             return (
@@ -120,35 +117,41 @@ export default class Widget extends React.PureComponent{
         let isHovered = editor.hovered === key;
         let isSelected = editor.selected === key;
         let isDraggedOver = editor.draggedOver === key;
-        let children = [];
-        let lastIndex = (value.children || []).length + 1;
-        (value.children || []).map((child, i) => {
+        let children;
+        if(value.children){
+            children = [];
+            let lastIndex = value.children.length + 1;
+            value.children.map((child, i) => {
+                children.push(
+                    <Placeholder 
+                        editor={ editor }
+                        id={ `${this.key}:${i}` }
+                        key={`placeholder-${i}`}
+                    />
+                );
+                child && children.push(
+                    <Layout
+                        ref={ `child-${i}` }
+                        key={ child.id }
+                        index={i}
+                        value={ child } 
+                        widgets={ widgets } 
+                        editor={ editor }
+                        path={ this.path }
+                        parent={this}
+                    />
+                );
+            });
             children.push(
                 <Placeholder 
                     editor={ editor }
-                    id={ `${this.key}:${i}` }
-                    key={`placeholder-${i}`}/>)
-            children.push(
-                <Widget
-                    ref={ `child-${i}` }
-                    key={ child.id }
-                    index={i}
-                    value={ child } 
-                    components={ components } 
-                    editor={ editor }
-                    path={ this.path }
-                    parent={this}
-                />
-            );
-        });
-        children.push(
-            <Placeholder 
-                editor={ editor }
-                id={ `${this.key}:${lastIndex}` }
-                key={`placeholder-${lastIndex}`}/>)
+                    id={ `${this.key}:${lastIndex}` }
+                    key={`placeholder-${lastIndex}`}/>)
+        }
         return (
             <div
                 ref={ el => this.el = el }
+                data-layout={this.key}
                 onMouseEnter={this.onMouseEnter}
                 onMouseLeave={this.onMouseLeave}
                 onDragOver={this.onDragOver}
@@ -164,9 +167,9 @@ export default class Widget extends React.PureComponent{
             >
                 {
                     Component ? (
-                        <Component { ...value.props }>
-                            {children}
-                        </Component>
+                        children ? 
+                            React.createElement(Component, value.props, ...children)
+                            : React.createElement(Component, value.props)
                     ) : children
                 }
                 
@@ -179,9 +182,6 @@ export default class Widget extends React.PureComponent{
                         bottom: 0,
                         border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isHovered ? '2px solid #22a' : 0,
                         pointerEvents: 'none'}}>
-                            <div style={{ position: 'absolute', bottom: 0}}>
-                                {this.placeholderIndex}
-                            </div>
                         </div>
             </div>
         );

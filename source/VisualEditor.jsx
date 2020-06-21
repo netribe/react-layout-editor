@@ -1,5 +1,5 @@
 import React from 'react';
-import Widget from './Widget.jsx';
+import Layout from './Layout.jsx';
 import utils from './utils';
 
 export default class VisualEditor extends React.PureComponent{
@@ -116,29 +116,29 @@ export default class VisualEditor extends React.PureComponent{
     };
     onDragOver = (key, e) => {
         if(this.isDropped){
-            console.log(1)
             this.isDropped = false;
             return;
         }
-        console.log(2)
         if(Array.isArray(key)){ key = key.join('/')};
         let oldKey = this.draggedOver;
         if(!oldKey){
             this.getPlaceholderBoxes();
         }
-        this.draggedOver = key;
-        this.applyListeners(oldKey, key);
+        
         if(key && e){
             let nearestPlaceholder = this.getNearestPlaceholder(e);
             let oldPlaceholder = this.activePlaceholder;
             if(this.activePlaceholder !== nearestPlaceholder){
                 this.activePlaceholder = nearestPlaceholder;
+                this.draggedOver = this.activePlaceholder.split(':')[0];
                 this.applyListeners(oldPlaceholder, this.activePlaceholder);
             }
         }
         else{
+            this.draggedOver = null;
             this.releasePlaceholder();
         }
+        this.applyListeners(oldKey, key);
         
     };
     
@@ -148,6 +148,15 @@ export default class VisualEditor extends React.PureComponent{
         }
     };
     
+    setChildId = (child, overrideExistingId) => {
+        if(!child){ return child; }
+        let newChild = { ...child, id: child.id && !overrideExistingId ? child.id : utils.uuid() }
+        if(child.children){
+            newChild.children = child.children.map(c => this.setChildId(c, overrideExistingId));
+        }
+        return newChild;
+    };
+
     addChild = (key, index, newChild) => {
         if(typeof key === 'string'){
             key = key.split('/');
@@ -160,26 +169,20 @@ export default class VisualEditor extends React.PureComponent{
             }
             query.push('children');
         });
-        let children = utils.get(this.props.value, query);
-        if(children){
-            let newChildren = [];
-            if(!newChild.id){
-                newChild = { ...newChild, id: utils.uuid() }
-            }
-            children.map((child, i) => {
-                if(i === index){
-                    newChildren.push(newChild);
-                }
-                newChildren.push(child);
-            });
-            if(index > newChildren.length - 1){
+        let children = utils.get(this.props.value, query) || [];
+        let newChildren = [];
+        newChild = this.setChildId(newChild);
+        children.map((child, i) => {
+            if(i === index){
                 newChildren.push(newChild);
             }
-            let newValue = utils.set(this.props.value, query, newChildren);
-            console.log(newChildren, newValue, index)
-            this.props.onChange(newValue);
+            newChildren.push(child);
+        });
+        if(index > newChildren.length - 1){
+            newChildren.push(newChild);
         }
-        console.log(children)
+        let newValue = utils.set(this.props.value, query, newChildren);
+        this.props.onChange(newValue);
     };
 
     onDrop = (e) => {
@@ -209,18 +212,17 @@ export default class VisualEditor extends React.PureComponent{
     }
 
     render(){
-        let { value, onChange, components, editors, style } = this.props;
+        let { value, onChange, widgets, style } = this.props;
         return (
             <div 
                 ref={ el => this.el = el } 
-                style={{ height: '100%', width: '100%', position: 'relative', display: 'flex', ...style }}
+                style={{ height: '100%', width: '100%', position: 'relative', display: 'flex', overflow: 'auto', ...style }}
                 onDrop={ this.onDrop }
             >
-                <Widget 
+                <Layout 
                     value={ value } 
                     onChange={ onChange } 
-                    components={ components } 
-                    editors={ editors }
+                    widgets={ widgets } 
                     editor={this}
                 />
             </div>

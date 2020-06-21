@@ -66,12 +66,11 @@ Inputs are used to edit the props of a widget.
 * description
 
 #### Input types
-* Boolean (switch)
-* Number
-* String
-* Select
-    - options
+* [x] Boolean (switch)
+* [x] Number
+* [x] String
+* [/]Select
+    - [x] options
     - renderItem?
-* Color Picker
-* Font (Select + renderItem)
-
+* [ ] Color Picker
+* [ ] Font (Select + renderItem)
