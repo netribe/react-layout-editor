@@ -3,6 +3,7 @@ import VisualEditor from './VisualEditor.jsx';
 import PropsEditor from './PropsEditor.jsx';
 import AddWidgetPanel from './AddWidgetPanel.jsx';
 import utils from './utils.js';
+import editors from './editors';
 
 export default class ReactLayoutEditor extends React.PureComponent{
     constructor(props){
@@ -39,6 +40,10 @@ export default class ReactLayoutEditor extends React.PureComponent{
         let newValue = utils.set(value, fullPath, props);
         onChange && onChange(newValue);
     };
+    deleteChild = () => {
+        let { selectedKey } = this.state;
+        this.visualEditor.deleteChild(selectedKey);
+    };
     render(){
         let { style, value, onChange, widgets, inputs } = this.props;
         let { selectedSchema, selectedItem } = this.state;
@@ -52,6 +57,7 @@ export default class ReactLayoutEditor extends React.PureComponent{
                     value={ value } 
                     onChange={ onChange } 
                     widgets={ widgets }
+                    // editors={ editors }
                     onSelect={ this.onSelectComponent }
                 />
                 <div style={{ width: 200, borderLeft: '1px solid #ddd' }}>
@@ -59,6 +65,7 @@ export default class ReactLayoutEditor extends React.PureComponent{
                         schema={ selectedSchema }
                         value={ selectedItem?.props || {} }
                         onChange={ this.setProps }
+                        onDelete={ this.deleteChild }
                         inputs={ inputs }
                     />
                 </div>

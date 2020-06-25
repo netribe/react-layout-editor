@@ -14,7 +14,6 @@ export default class VisualEditor extends React.PureComponent{
         this.onDragOver = utils.throttle(this.onDragOver, 100);
     }
     componentDidMount(){
-        top.editor = this;
         this.el.addEventListener('dragleave', this.onDragLeave, false);
     }
     componentWillUnmount(){
@@ -26,11 +25,12 @@ export default class VisualEditor extends React.PureComponent{
     unbind = (key) => {
         delete this.listeners[key];
     };
-    applyListeners = (keyA, keyB) => {
-        let a = this.listeners[keyA];
-        let b = this.listeners[keyB];
-        a && a();
-        b && b();
+    applyListeners = (...args) => {
+        let listener;
+        for(let i = 0; i < args.length; i++){
+            listener = this.listeners[args[i]];
+            listener && listener();
+        }
     };
     getPlaceholderBoxes = () => {
         for(let m in this.placeholders){
@@ -95,15 +95,32 @@ export default class VisualEditor extends React.PureComponent{
             this.applyListeners(oldPlaceholder);
         }
     };
+
+    isDraggedOver = () => {
+        return this.lastDragOver && (this.lastDragOver > Date.now() - 300);
+    };
     
     onHover = (key) => {
         if(Array.isArray(key)){ key = key.join('/')};
-        this.draggedOver = null;
+        // this.draggedOver = null;
         let oldKey = this.hovered;
         if(oldKey === key){ return; }
         this.hovered = key;
-        this.applyListeners(oldKey, key);
-        this.releasePlaceholder();
+        let ids = [];
+        let oldIds = [];
+        key && key.split('/').map((id, i) => {
+            ids.push(id);
+            this.applyListeners(ids.join('/'));
+        });
+        oldKey && oldKey.split('/').map((id, i) => {
+            oldIds.push(id);
+            if(ids[i] !== id){
+                this.applyListeners(oldIds.join('/'));
+            }
+        });
+        if(!this.isDraggedOver()){
+            this.releasePlaceholder();
+        }
     };
     onSelect = (key, value) => {
         if(Array.isArray(key)){ key = key.join('/')};
@@ -121,7 +138,7 @@ export default class VisualEditor extends React.PureComponent{
         }
         if(Array.isArray(key)){ key = key.join('/')};
         let oldKey = this.draggedOver;
-        if(!oldKey){
+        if(!this.activePlaceholder){
             this.getPlaceholderBoxes();
         }
         
@@ -139,13 +156,29 @@ export default class VisualEditor extends React.PureComponent{
             this.releasePlaceholder();
         }
         this.applyListeners(oldKey, key);
-        
+        this.lastDragOver = Date.now();
     };
     
     onDragLeave = (e) => {
         if(!this.el.contains(e.relatedTarget)){
             this.onDragOver(null);
         }
+    };
+
+    onChange = (key, value) => {
+        if(typeof key === 'string'){
+            key = key.split('/');
+        }
+        let query = [];
+        key.map((id, i) => {
+            if(i > 0){
+                query.push({ id });
+            }
+            query.push('children');
+        });
+        query.pop();
+        let newValue = utils.set(this.props.value, query, value);
+        this.props.onChange(newValue);
     };
     
     setChildId = (child, overrideExistingId) => {
@@ -171,18 +204,38 @@ export default class VisualEditor extends React.PureComponent{
         });
         let children = utils.get(this.props.value, query) || [];
         let newChildren = [];
+        let pushed = false;
         newChild = this.setChildId(newChild);
         children.map((child, i) => {
             if(i === index){
                 newChildren.push(newChild);
+                pushed = true;
             }
-            newChildren.push(child);
+            if(child || (child === null)){
+                newChildren.push(child);
+            }
         });
-        if(index > newChildren.length - 1){
+        if(!pushed){
             newChildren.push(newChild);
         }
         let newValue = utils.set(this.props.value, query, newChildren);
+        let newKey = `${key.join('/')}/${newChild.id}`;
+        this.addedChild = newKey;
         this.props.onChange(newValue);
+        this.onSelect(newKey, newChild);
+        this.onHover(newKey, newChild);
+    };
+
+    deleteChild = (childKey) => {
+        let { value, onChange } = this.props;
+        let path = utils.getPath(childKey);
+        let id = path.pop().id;
+        let children = utils.get(value, path);
+        children = children.filter(c => !c || c.id !== id)
+        let newValue = utils.set(value, path, children);
+        this.removed = childKey;
+        this.applyListeners(childKey);
+        onChange && setTimeout(e => onChange(newValue), 440)
     };
 
     onDrop = (e) => {
@@ -209,10 +262,12 @@ export default class VisualEditor extends React.PureComponent{
         }
         this.isDropped = true;
         this.releasePlaceholder();
+        setTimeout(e => this.onDragOver(null), 100)
     }
 
     render(){
-        let { value, onChange, widgets, style } = this.props;
+        top.editor = this;
+        let { value, onChange, widgets, editors, style } = this.props;
         return (
             <div 
                 ref={ el => this.el = el } 
@@ -223,6 +278,7 @@ export default class VisualEditor extends React.PureComponent{
                     value={ value } 
                     onChange={ onChange } 
                     widgets={ widgets } 
+                    editors={ editors } 
                     editor={this}
                 />
             </div>

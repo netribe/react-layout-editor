@@ -3,6 +3,7 @@ import { Input } from '../source';
 import StringInput from '../source/Inputs/String.jsx';
 import NumberInput from '../source/Inputs/Number.jsx';
 import BooleanInput from '../source/Inputs/Boolean.jsx';
+import TextEditor from '../source/Inputs/TextEditor';
 import { action, actions } from '@storybook/addon-actions';
 import { withKnobs, text, select } from "@storybook/addon-knobs";
 
@@ -91,3 +92,5 @@ export const Boolean = () =>{
             value={text('Value', false)} />
     );
 }
+
+export const textEditor = e => <TextEditor/>

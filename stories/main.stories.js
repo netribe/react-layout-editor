@@ -10,6 +10,7 @@ let style = { border: '1px solid #ddd', padding: 10}
 let A = ({ children, testA }) => <div style={ style }><p>A { testA || '1' }</p>{ children }</div>
 let B = ({ children, testB }) => {
     children = React.Children.toArray(children);
+    // console.log('render', children)
     return (
         <div style={ style }>
             <div style={{ display: 'flex' }}>
@@ -21,12 +22,9 @@ let B = ({ children, testB }) => {
                 </div>
                 {children[3] || null}
             </div>
-            <div style={{ display: 'flex'}}>
-                { children }
-            </div>
         </div>
     );
-}    
+}
 
 let StringInput = ({ children, value, onChange, label }) => 
     <Input
@@ -57,13 +55,23 @@ class EditorStory extends React.Component{
                         id: '2',
                         layout: {},
                         type: 'A',
-                        children: [
-                            {
-                                id: '4',
-                                layout: {},
-                                type: 'B'
-                            }
-                        ]
+                        children: []
+                    },
+                    {
+                        id: '3',
+                        layout: {},
+                        type: 'A',
+                        children: []
+                    },
+                    {
+                        id: '4',
+                        layout: {
+                            padding: '10px 0'
+                        },
+                        props: {
+                            variant: 'fullWidth'
+                        },
+                        type: 'Divider',
                     }
                 ]
             },
@@ -86,18 +94,13 @@ class EditorStory extends React.Component{
                     ]
                 },
                 {
-                    id: 'B',
-                    label: 'B',
+                    id: 'Section',
+                    label: 'Section',
                     body: {
-                        type: 'B',
-                        layout: {},
-                        props: {},
-                        children: [
-                            null,
-                            null,
-                            null,
-                            null
-                        ]
+                        layout: {
+                            padding: 20
+                        },
+                        children: []
                     },
                     component: B,
                     props: [
@@ -114,7 +117,7 @@ class EditorStory extends React.Component{
                     body: {
                         layout: {
                             flexDirection: 'row',
-                            padding: 10
+                            padding: '20px 10px'
                         },
                         props: {},
                         children: []
@@ -127,7 +130,7 @@ class EditorStory extends React.Component{
                     body: {
                         layout: {
                             flexDirection: 'column',
-                            padding: 10
+                            padding: '20px 10px'
                         },
                         props: {},
                         children: []
@@ -211,8 +214,8 @@ class EditorStory extends React.Component{
                     },
                     props: [
                         {
-                            key: 'fontSize',
-                            label: 'Font Size',
+                            key: 'value',
+                            label: 'Value',
                             type: 'String'
                         }
                     ]
@@ -247,7 +250,7 @@ class EditorStory extends React.Component{
         };
     }
     render(){
-        let { value, widgets, schemas } = this.state;
+        let { value, widgets } = this.state;
         return (
             <div style={{ position: 'fixed', fontFamily: 'Ubuntu Mono', top: 0, left: 0, right: 0, bottom: 0 }}>
                 <ReactLayoutEditor 

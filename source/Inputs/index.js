@@ -117,6 +117,7 @@ const styles = {
         border: 0,
         outline: 0,
         padding: 10,
+        width: 84,
         boxShadow: '0px 0px 10px -5px rgba(0,0,0,0.55)'
     },
     descrpition: {
