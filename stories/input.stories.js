@@ -1,5 +1,8 @@
 import React from 'react';
 import { Input } from '../source';
+import StringInput from '../source/Inputs/String.jsx';
+import NumberInput from '../source/Inputs/Number.jsx';
+import BooleanInput from '../source/Inputs/Boolean.jsx';
 import { action, actions } from '@storybook/addon-actions';
 import { withKnobs, text, select } from "@storybook/addon-knobs";
 
@@ -53,4 +56,38 @@ export const WithAction = () => {
             ]}
             type={ getSelect() }/>
     );  
+      
+}
+
+export const String = () =>{
+    return (
+        <StringInput
+            label={text('Label', 'Input Label')}
+            name={text('Name', 'Input Name')}
+            onChange={action('onChange')}
+            description={text('Description', 'Input description')}
+            value={text('Value', 'Change Me')} />
+    );
+}
+
+export const Number = () =>{
+    return (
+        <NumberInput
+            label={text('Label', 'Number Label')}
+            name={text('Name', 'Input Name')}
+            onChange={action('onChange')}
+            description={text('Description', 'Input description')}
+            value={text('Value', 234)} />
+    );
+}
+
+export const Boolean = () =>{
+    return (
+        <BooleanInput
+            label={text('Label', 'Boolean Label')}
+            name={text('Name', 'Input Name')}
+            onChange={action('onChange')}
+            description={text('Description', 'Input description')}
+            value={text('Value', false)} />
+    );
 }
