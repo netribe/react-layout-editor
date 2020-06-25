@@ -118,7 +118,7 @@ export default class VisualEditor extends React.PureComponent{
                 this.applyListeners(oldIds.join('/'));
             }
         });
-        if(this.isDraggedOver()){
+        if(!this.isDraggedOver()){
             this.releasePlaceholder();
         }
     };

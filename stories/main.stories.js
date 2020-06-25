@@ -56,6 +56,22 @@ class EditorStory extends React.Component{
                         layout: {},
                         type: 'A',
                         children: []
+                    },
+                    {
+                        id: '3',
+                        layout: {},
+                        type: 'A',
+                        children: []
+                    },
+                    {
+                        id: '4',
+                        layout: {
+                            padding: '10px 0'
+                        },
+                        props: {
+                            variant: 'fullWidth'
+                        },
+                        type: 'Divider',
                     }
                 ]
             },

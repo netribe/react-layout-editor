@@ -15,6 +15,7 @@ class Placeholder extends React.Component{
     }
     componentWillUnmount(){
         let {editor, id} = this.props;
+        editor.unbind(this.id);
         delete editor.placeholders[id];
     }
     update = () => {
@@ -70,28 +71,23 @@ export default class Layout extends React.PureComponent{
             this.componentEl = this.el.firstElementChild;
             let { display, position } = getComputedStyle(this.componentEl);
             this.componentEl.style.position = 'absolute';
-            let parentLayout = parent.props.value.layout || {};
-            let isHorizontal = parentLayout.flexDirection && (parentLayout.flexDirection.indexOf('row') > -1);
             this.setState({
                 isRendered: true
             }, e => {
                 let { width, height } = this.componentEl.getBoundingClientRect();
-                let minDim = isHorizontal ? 'minHeight' : 'minWidth';
-                let elStyle = getComputedStyle(this.el);
+                let { minWidth, minHeight } = getComputedStyle(this.el);
                 this.componentEl.style.display = 'none';
                 this.componentEl.style.position = 'relative';
                 this.el.style.minWidth = '0px';
                 this.el.style.minHeight = '0px';
-                this.el.style.whiteSpace = 'nowrap';
                 setTimeout(e => {
                     this.el.style.minWidth = `${width}px`;
                     this.el.style.minHeight = `${height}px`;
                     setTimeout(e => {
-                        this.el.style.minWidth = elStyle.minWidth || `auto`;
-                        this.el.style.minHeight = elStyle.minHeight || `auto`;
-                        this.el.style.whiteSpace = elStyle.whiteSpace || `normal`;
+                        this.el.style.minWidth = minWidth || `auto`;
+                        this.el.style.minHeight = minHeight || `auto`;
                         this.componentEl.style.display = display ||'block';
-                        this.componentEl.style.position = position ||'block';
+                        this.componentEl.style.position = position ||'relative';
                     }, 440)
                 }, 0)
                 
@@ -176,6 +172,7 @@ export default class Layout extends React.PureComponent{
     };
     render(){
         let { style, value, widgets, editor, parent, path, index, ...props } = this.props;
+        let { isAdded, isRendered } = this.state;
         let widget = value.type && widgets.find(widget => widget.id === value.type);
         let Component = widget ? widget.component : value.type;
         let key = this.key;
@@ -199,7 +196,6 @@ export default class Layout extends React.PureComponent{
         let isChildHovered = editor.hovered && editor.hovered.indexOf(key) === 0;
         let isSelected = editor.selected === key;
         let isDraggedOver = editor.draggedOver === key;
-        let { isAdded, isRendered } = this.state;
         let widgetProps = value.props;
         let children = null;
         let Editor = widget && widget.editor || editors[value.type];
@@ -247,6 +243,7 @@ export default class Layout extends React.PureComponent{
             flexDirection: 'column',
             position: 'relative',
             transition: '0.4s ease',
+            whiteSpace: 'nowrap',
             ...value.layout
         };
         
