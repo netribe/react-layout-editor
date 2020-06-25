@@ -2,12 +2,17 @@ import React from 'react';
 
 export default class PropsEditor extends React.PureComponent{
     render(){
-        let { value, onChange, inputs, schema, style } = this.props;
+        let { value, onChange, inputs, schema, style, onDelete } = this.props;
         if(!schema){
             schema = [];
         }
         return (
             <div style={{ height: '100%', width: '100%', position: 'relative', ...style }}>
+                { schema.length ? 
+                    (
+                        <button onClick={ onDelete }>Delete</button>
+                    ) : null
+                }
                 {
                     schema.map((item, i) => {
                         let Input = inputs[item.type];

@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDom from 'react-dom';
 import utils from './utils';
+import editors from './editors';
 
 class Placeholder extends React.Component{
     constructor(props){
@@ -53,14 +54,49 @@ export default class Layout extends React.PureComponent{
         this.key = this.path.join('/');
         this.children = [];
         this.state = {
-            error: null
+            error: null,
+            isAdded: props.editor.addedChild === this.key,
+            isRendered: false,
+            isRemoved: false
         };
     }
     componentDidMount(){
-        let {editor} = this.props;
+        let {editor, parent} = this.props;
         this.el = this.el || ReactDom.findDOMNode(this);
         editor.bind(this.key, this.update);
-        this.box = this.el && this.el.getBoundingClientRect();
+        // this.box = this.el && this.el.getBoundingClientRect();
+        if(this.state.isAdded){
+            // this animates the widget when it is added by drop
+            this.componentEl = this.el.firstElementChild;
+            let { display, position } = getComputedStyle(this.componentEl);
+            this.componentEl.style.position = 'absolute';
+            let parentLayout = parent.props.value.layout || {};
+            let isHorizontal = parentLayout.flexDirection && (parentLayout.flexDirection.indexOf('row') > -1);
+            this.setState({
+                isRendered: true
+            }, e => {
+                let { width, height } = this.componentEl.getBoundingClientRect();
+                let minDim = isHorizontal ? 'minHeight' : 'minWidth';
+                let elStyle = getComputedStyle(this.el);
+                this.componentEl.style.display = 'none';
+                this.componentEl.style.position = 'relative';
+                this.el.style.minWidth = '0px';
+                this.el.style.minHeight = '0px';
+                this.el.style.whiteSpace = 'nowrap';
+                setTimeout(e => {
+                    this.el.style.minWidth = `${width}px`;
+                    this.el.style.minHeight = `${height}px`;
+                    setTimeout(e => {
+                        this.el.style.minWidth = elStyle.minWidth || `auto`;
+                        this.el.style.minHeight = elStyle.minHeight || `auto`;
+                        this.el.style.whiteSpace = elStyle.whiteSpace || `normal`;
+                        this.componentEl.style.display = display ||'block';
+                        this.componentEl.style.position = position ||'block';
+                    }, 440)
+                }, 0)
+                
+            })
+        }
     }
     componentWillUnmount(){
         let {editor} = this.props;
@@ -69,6 +105,22 @@ export default class Layout extends React.PureComponent{
     componentDidCatch(error){
         console.error(error);
         this.setState({ error });
+    }
+    componentDidUpdate(){
+        let { editor } = this.props;
+        if(!this.state.isRemoved && (editor.removed === this.key)){
+            this.componentEl = this.componentEl || this.el.firstElementChild;
+            let { width, height } = this.el.getBoundingClientRect();
+            this.el.style.minWidth = `${width}px`;
+            this.el.style.minHeight = `${height}px`;
+            if(this.componentEl){
+                this.componentEl.style.display = 'none';
+            }
+            setTimeout(e => {
+                this.el.style.minWidth = `0px`;
+                this.el.style.minHeight = `0px`;
+            }, 40)
+        }
     }
     update = () => {
         this.forceUpdate();
@@ -101,9 +153,31 @@ export default class Layout extends React.PureComponent{
         e.stopPropagation();
         editor.onSelect(this.key, value);
     };
+    onChange = (value) => {
+        let { editor } = this.props;
+        editor.onChange(this.key, value);
+    };
+    onDragStart = (e) => {
+        let { type = 'react-drag', value } = this.props;
+        e.dataTransfer.setData(type, JSON.stringify({ ...value, id: utils.uuid() }));
+        e.stopPropagation();
+        setTimeout(e => 
+            this.props.editor.deleteChild(this.key)
+        , 0)
+    };
+    renderPlaceholder = (index) => {
+        return (
+            <Placeholder 
+                editor={ this.props.editor }
+                id={ `${this.key}:${index}` }
+                key={`placeholder-${index}`}
+            />
+        );
+    };
     render(){
         let { style, value, widgets, editor, parent, path, index, ...props } = this.props;
-        let Component = (widgets.find(widget => widget.id === value.type) || {}).component;
+        let widget = value.type && widgets.find(widget => widget.id === value.type);
+        let Component = widget ? widget.component : value.type;
         let key = this.key;
 
 
@@ -115,27 +189,40 @@ export default class Layout extends React.PureComponent{
             </div>
             );
         }
-        if(value.type && !Component){
+        if(value.type && !Component && (typeof Component !== 'string')){
             return (
                 <div>Component "{value.type}" is missing</div>
             );
         }
         
         let isHovered = editor.hovered === key;
+        let isChildHovered = editor.hovered && editor.hovered.indexOf(key) === 0;
         let isSelected = editor.selected === key;
         let isDraggedOver = editor.draggedOver === key;
+        let { isAdded, isRendered } = this.state;
+        let widgetProps = value.props;
         let children = null;
+        let Editor = widget && widget.editor || editors[value.type];
+        if(Editor){
+            widgetProps = { ...value.props, _onChange: this.onChange, _value: value }
+            Component = Editor;
+        }
         if(value.children){
             children = [];
             let lastIndex = value.children.length + 1;
             value.children.map((child, i) => {
-                children.push(
-                    <Placeholder 
-                        editor={ editor }
-                        id={ `${this.key}:${i}` }
-                        key={`placeholder-${i}`}
-                    />
-                );
+                // valid children should be wrapped with placeholders on both sides
+                // but null children should be replaced with placeholders
+                if(!child){
+                    children.push(
+                        this.renderPlaceholder(i)
+                    )
+                }
+                else if((i === 0) || (value.children[i - 1])){
+                    children.push(
+                        this.renderPlaceholder(i)
+                    )
+                }
                 child && children.push(
                     <Layout
                         ref={ `child-${i}` }
@@ -155,6 +242,14 @@ export default class Layout extends React.PureComponent{
                     id={ `${this.key}:${lastIndex}` }
                     key={`placeholder-${lastIndex}`}/>)
         }
+        let elStyle = {
+            display: (isAdded && !isRendered) ? 'none' : 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            transition: '0.4s ease',
+            ...value.layout
+        };
+        
         return (
             <div
                 ref={ el => this.el = el }
@@ -163,20 +258,18 @@ export default class Layout extends React.PureComponent{
                 onMouseLeave={this.onMouseLeave}
                 onDragOver={this.onDragOver}
                 onDragLeave={this.onDragLeave}
-                onClick={this.onClick}
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    ...value.layout
-                }} 
+                // onClick={this.onClick}
+                onMouseDown={this.onClick}
+                draggable="true"
+                onDragStart={ this.onDragStart }
+                style={ elStyle } 
                 { ...props }
             >
                 {
                     Component ? (
                         children ? 
-                            React.createElement(Component, value.props, ...children)
-                            : React.createElement(Component, value.props)
+                            React.createElement(Component, widgetProps, ...children)
+                            : React.createElement(Component, widgetProps)
                     ) : children
                 }
                 
@@ -187,7 +280,8 @@ export default class Layout extends React.PureComponent{
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isHovered ? '2px solid #22a' : 0,
+                        border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isChildHovered ? '2px solid #22a' : 0,
+                        background: isHovered ? 'rgba(32,32,176, 0.05)' : 'transparent',
                         pointerEvents: 'none'}}>
                         </div>
             </div>

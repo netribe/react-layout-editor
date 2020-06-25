@@ -60,6 +60,21 @@ let utils = {
 		});
     },
     throttle,
+    getPath(key){
+        if(typeof key === 'string'){
+            key = key.split('/');
+        }
+        let query = [];
+        key.map((id, i) => {
+            if(i > 0){
+                query.push({ id });
+            }
+            if(i < key.length - 1){
+                query.push('children');
+            }
+        });
+        return query;
+    },
     set(target, selector, data){
         let selectorType = typeOf(selector);
         let targetType = typeOf(target);
