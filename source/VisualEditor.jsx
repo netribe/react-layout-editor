@@ -64,7 +64,7 @@ export default class VisualEditor extends React.PureComponent{
                     point = {x, y };
                 }
             }
-            else{
+            else if (!width){
                 if(mousePoint.y >= y){
                     if(mousePoint.y <= y + height){
                         point = {x, y: mousePoint.y };
@@ -77,9 +77,68 @@ export default class VisualEditor extends React.PureComponent{
                     point = {x, y };
                 }
             }
-            // else{
-            //     throw new Error(`placeholder has volume`)
-            // }
+            else{
+                // placeholder has valume (+)
+                let xDis, yDis;
+                if(mousePoint.x >= x){
+                    // if the mouse is to the right of the 
+                    // left side of the placeholder
+                    if(mousePoint.x <= x + width){
+                        // if the mouse is to the left of the 
+                        // right side of the placeholder
+                        xDis = 0;
+                    }
+                    else{
+                        // save the distance from the mouse
+                        // to the right side of the placeholder
+                        xDis = mousePoint.x - (x + width)
+                    }
+                }
+                else{
+                    // save the (negative) distance from the mouse
+                    // to the left side of the placeholder
+                    xDis = mousePoint.x - x;
+                }
+                if(mousePoint.y >= y){
+                    if(mousePoint.y <= y + height){
+                        yDis = 0;
+                    }
+                    else{
+                        yDis = mousePoint.y - (y + height);
+                    }
+                }
+                else{
+                    yDis = mousePoint.y - y;
+                }
+                if(xDis === 0 && yDis === 0){
+                    // inside the placeholder
+                    point = mousePoint;
+                }
+                else if(Math.abs(xDis) < Math.abs(yDis)){
+                    // the mouse is closer on the x axis
+                    if(xDis === 0){
+                        point = yDis > 0 ? {x : mousePoint.x, y: y + height }: {x: mousePoint.x, y };
+                    }
+                    else if(xDis > 0){
+                        point = yDis > 0 ? {x: x + width, y: y + height }: {x: x + width, y };
+                    }
+                    else{
+                        point = yDis > 0 ? {x, y: y + height }: {x, y };
+                    }
+                }
+                else{
+                    // the mouse is closer on the y axis
+                    if(yDis === 0){
+                        point = xDis > 0 ? {x : x + width, y: mousePoint.y }: {x, y: mousePoint.y };
+                    }
+                    else if(yDis > 0){
+                        point = xDis > 0 ? {x: x + width, y: y + height }: {x, y: y + height };
+                    }
+                    else{
+                        point = xDis > 0 ? {x: x + width, y }: {x, y };
+                    }
+                }
+            }
             distance = this.getDistance(mousePoint, point);
             if(distance < shortestDistance){
                 shortestDistance = distance;

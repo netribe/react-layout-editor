@@ -1,10 +1,9 @@
 // test
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { ReactLayoutEditor, Input } from '../source';
-import * as ui from 'ui';
-
-export default { title: 'ReactEditor' };
+import * as ui from '../ui';
 
 let style = { border: '1px solid #ddd', padding: 10}
 let A = ({ children, testA }) => <div style={ style }><p>A { testA || '1' }</p>{ children }</div>
@@ -34,7 +33,7 @@ let StringInput = ({ children, value, onChange, label }) =>
     // </div>
 let BooleanInput = ({ children, value, onChange, label }) => <div style={ style }>{label}<input type="checkbox" value={String(value)} onChange={e => onChange(e.target.checked)}/></div>
 let inputs = {String: StringInput, Boolean: BooleanInput};
-class EditorStory extends React.Component{
+class EditorDemo extends React.Component{
     constructor(props){
         super(props);
         this.state = {
@@ -253,7 +252,7 @@ class EditorStory extends React.Component{
     render(){
         let { value, widgets } = this.state;
         return (
-            <div style={{ position: 'fixed', fontFamily: 'Ubuntu Mono', top: 0, left: 0, right: 0, bottom: 0 }}>
+            <div style={{ padding: 20, height: '100%' }}>
                 <ReactLayoutEditor 
                     value={ value } 
                     widgets={widgets}
@@ -265,4 +264,4 @@ class EditorStory extends React.Component{
     }
 }
 
-export const editor = () => <EditorStory/>;
+ReactDOM.render(<EditorDemo/>, document.getElementById('app'))

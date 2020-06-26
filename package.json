@@ -8,6 +8,7 @@
     "vendor": ".\\node_modules\\.bin\\webpack --mode development --progress --hide-modules --config webpack.dll.js",
     "start": ".\\node_modules\\.bin\\webpack --mode development --watch --progress --hide-modules --config=./webpack.config.js",
     "production": ".\\node_modules\\.bin\\webpack --mode production --config=./webpack.config.js",
+    "demo": ".\\node_modules\\.bin\\webpack --mode production --config=./demo/webpack.config.js",
     "storybook": "start-storybook"
   },
   "repository": {

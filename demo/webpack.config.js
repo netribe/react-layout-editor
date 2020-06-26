@@ -1,12 +1,12 @@
 
 const webpack = require("webpack");
 const path = require('path');
-const sourceFolder = path.join(__dirname, 'source');
-const entry = path.resolve(__dirname, 'source/index.js');
+const sourceFolder = path.join(__dirname, '../source');
+const entry = path.resolve(__dirname, './index.js');
 const VERSION = 1;
 
 const publicPath = '/build/';
-const outputPath = path.join(__dirname, 'dist');
+const outputPath = path.join(__dirname, 'build');
 
 module.exports = function (env) {
     let vars = env || {

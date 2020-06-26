@@ -26,13 +26,18 @@ class Placeholder extends React.Component{
         return this.box;
     };
     render(){
-        let { style, children, editor, id, ...props } = this.props;
+        let { style, children, editor, id, isButton, ...props } = this.props;
         let isOpen = editor.activePlaceholder === id;
         let s = {
+            // background: isOpen ? 'red' : '#d99',
             background: 'red',
+            opacity: isOpen ? 1 : 0.25,
             transition: '0.4s ease',
-            minWidth: isOpen ? 20 : 0,
-            minHeight: isOpen ? 20 : 0,
+            minWidth: isOpen ? 20 : (isButton ? 14 : 0),
+            minHeight: isOpen ? 20 : (isButton ? 14 : 0),
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
             ...style
         }
         return (
@@ -42,7 +47,11 @@ class Placeholder extends React.Component{
                  data-placeholder={id} 
                  ref={el => this.el = el}
             >
-                {children}
+                {isButton ? (
+                    <div style={{ lineHeight: '14px', position: 'relative', top: -1, color: '#fff' }}>
+                        +
+                    </div>
+                ) : null}
             </div>
         );
     }
@@ -161,12 +170,13 @@ export default class Layout extends React.PureComponent{
             this.props.editor.deleteChild(this.key)
         , 0)
     };
-    renderPlaceholder = (index) => {
+    renderPlaceholder = (index, isButton) => {
         return (
             <Placeholder 
                 editor={ this.props.editor }
-                id={ `${this.key}:${index}` }
                 key={`placeholder-${index}`}
+                id={ `${this.key}:${index}` }
+                isButton={ isButton }
             />
         );
     };
@@ -211,12 +221,12 @@ export default class Layout extends React.PureComponent{
                 // but null children should be replaced with placeholders
                 if(!child){
                     children.push(
-                        this.renderPlaceholder(i)
+                        this.renderPlaceholder(i, false)
                     )
                 }
                 else if((i === 0) || (value.children[i - 1])){
                     children.push(
-                        this.renderPlaceholder(i)
+                        this.renderPlaceholder(i, false)
                     )
                 }
                 child && children.push(
@@ -233,10 +243,8 @@ export default class Layout extends React.PureComponent{
                 );
             });
             children.push(
-                <Placeholder 
-                    editor={ editor }
-                    id={ `${this.key}:${lastIndex}` }
-                    key={`placeholder-${lastIndex}`}/>)
+                this.renderPlaceholder(lastIndex, true)
+            )
         }
         let elStyle = {
             display: (isAdded && !isRendered) ? 'none' : 'flex',
