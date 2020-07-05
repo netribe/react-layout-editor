@@ -3,6 +3,87 @@ import ReactDom from 'react-dom';
 import utils from './utils';
 import editors from './editors';
 
+class ResizeHandle extends React.Component{
+    renderHorizontal = (isVisible) => {
+        return (
+            <div 
+                style={{
+                    width: 10,
+                    top: 0,
+                    bottom: 0,
+                    right: -5,
+                    position: 'absolute',
+                    cursor: 'ew-resize',
+                    overflow: 'visible',
+                }}
+                draggable={true}
+                onMouseDown={ e => { e.stopPropagation(); this.props.onStartResize(e) }}
+                onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+            >
+                {
+                    isVisible ? 
+                    <div 
+                        style={{ 
+                            position: 'absolute',
+                            left: 1,
+                            width: 4,
+                            top: 10,
+                            bottom: 10,
+                            border: '1px solid #22a',
+                            background: '#fff',
+                            zIndex: 1,
+                            borderRadius: 2
+                        }}>
+                    </div> 
+                    : null 
+                }
+            </div>
+        );
+    };
+    renderVertical = (isVisible) => {
+        return (
+            <div 
+                style={{
+                    height: 10,
+                    left: 0,
+                    right: 0,
+                    bottom: -5,
+                    position: 'absolute',
+                    cursor: 'ns-resize',
+                    overflow: 'visible',
+                }}
+                draggable={true}
+                onMouseDown={ e => { e.stopPropagation(); this.props.onStartResize(e) }}
+                onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+                onMouseEnter={ this.props.onMouseEnter }
+            >
+                {
+                    isVisible ? 
+                    <div 
+                        style={{ 
+                            position: 'absolute',
+                            bottom: 2,
+                            height: 4,
+                            left: 10,
+                            right: 10,
+                            border: '1px solid #22a',
+                            background: '#fff',
+                            zIndex: 1,
+                            borderRadius: 2
+                        }}>
+
+                    </div>
+                    : null 
+                }
+                    
+            </div>
+        );
+    };
+    render(){
+        let { isHorizontal, isVisible } = this.props;
+        return isHorizontal ? this.renderHorizontal(isVisible) : this.renderVertical(isVisible);
+    }
+}
 class Placeholder extends React.Component{
     constructor(props){
         super(props);
@@ -38,6 +119,7 @@ class Placeholder extends React.Component{
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
+            margin: isButton ? 4 : 0,
             ...style
         }
         return (
@@ -67,13 +149,14 @@ export default class Layout extends React.PureComponent{
             error: null,
             isAdded: props.editor.addedChild === this.key,
             isRendered: false,
-            isRemoved: false
+            isRemoved: false,
+            isRenderComplete: false,
         };
     }
     componentDidMount(){
         let {editor, parent} = this.props;
         this.el = this.el || ReactDom.findDOMNode(this);
-        editor.bind(this.key, this.update);
+        editor.bind(this.key, this.update, this);
         // this.box = this.el && this.el.getBoundingClientRect();
         if(this.state.isAdded){
             // this animates the widget when it is added by drop
@@ -85,22 +168,28 @@ export default class Layout extends React.PureComponent{
             }, e => {
                 let { width, height } = this.componentEl.getBoundingClientRect();
                 let { minWidth, minHeight } = getComputedStyle(this.el);
-                this.componentEl.style.display = 'none';
-                this.componentEl.style.position = 'relative';
-                this.el.style.minWidth = '0px';
-                this.el.style.minHeight = '0px';
-                setTimeout(e => {
-                    this.el.style.minWidth = `${width}px`;
-                    this.el.style.minHeight = `${height}px`;
+                this.setState({
+                    isSampled: true
+                }, e => {
+                    this.componentEl.style.display = 'none';
+                    this.componentEl.style.position = 'relative';
+                    this.el.style.minWidth = '0px';
+                    this.el.style.minHeight = '0px';
                     setTimeout(e => {
-                        this.el.style.minWidth = minWidth || `auto`;
-                        this.el.style.minHeight = minHeight || `auto`;
-                        this.componentEl.style.display = display ||'block';
-                        this.componentEl.style.position = position ||'relative';
-                    }, 440)
-                }, 0)
-                
-            })
+                        this.el.style.minWidth = `${width}px`;
+                        this.el.style.minHeight = `${height}px`;
+                        setTimeout(e => {
+                            this.el.style.minWidth = minWidth || `auto`;
+                            this.el.style.minHeight = minHeight || `auto`;
+                            this.componentEl.style.display = display ||'block';
+                            this.componentEl.style.position = position ||'relative';
+                            this.setState({
+                                isRenderComplete: true
+                            })
+                        }, 440)
+                    }, 0)
+                })
+            });
         }
     }
     componentWillUnmount(){
@@ -132,7 +221,7 @@ export default class Layout extends React.PureComponent{
     };
     onMouseEnter = (e) => {
         let { editor } = this.props;
-        editor && editor.onHover(this.key);
+        editor && editor.onHover(this.key, e);
     };
     onMouseLeave = (e) => {
         let { editor, parent } = this.props;
@@ -140,7 +229,7 @@ export default class Layout extends React.PureComponent{
             parent.onMouseEnter(e);
         }
         else if(editor){
-            editor.onHover(null);
+            editor.onHover(null, e);
         }
     };
     
@@ -163,12 +252,20 @@ export default class Layout extends React.PureComponent{
         editor.onChange(this.key, value);
     };
     onDragStart = (e) => {
-        let { type = 'react-drag', value } = this.props;
-        e.dataTransfer.setData(type, JSON.stringify({ ...value, id: utils.uuid() }));
+        let { type = 'react-drag', value, editor } = this.props;
         e.stopPropagation();
+        if(editor.resizing){ 
+            e.preventDefault();
+            return; 
+        }
+        e.dataTransfer.setData(type, JSON.stringify({ ...value, id: utils.uuid() }));
         setTimeout(e => 
             this.props.editor.deleteChild(this.key)
         , 0)
+    };
+    onStartResize = (e) => {
+        let { editor, parent } = this.props;
+        editor.startResize(this.key, e, parent && parent.isHorizontal);
     };
     renderPlaceholder = (index, isButton) => {
         return (
@@ -182,7 +279,7 @@ export default class Layout extends React.PureComponent{
     };
     render(){
         let { style, value, widgets, editor, parent, path, index, ...props } = this.props;
-        let { isAdded, isRendered } = this.state;
+        let { isAdded, isRendered, isSampled, isRenderComplete } = this.state;
         let widget = value.type && widgets.find(widget => widget.id === value.type);
         let Component = widget ? widget.component : value.type;
         let key = this.key;
@@ -208,6 +305,24 @@ export default class Layout extends React.PureComponent{
         let isDraggedOver = editor.draggedOver === key;
         let widgetProps = value.props;
         let children = null;
+        let elStyle = {
+            display: (isAdded && !isRendered) ? 'none' : 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            whiteSpace: 'nowrap',
+            ...value.layout
+        };
+        if(isSampled && !isRenderComplete){
+            elStyle.paddingLeft = 0;
+            elStyle.paddingRight = 0;
+            elStyle.paddingTop = 0;
+            elStyle.paddingBottom = 0;
+        }
+        if(!editor.resizing){
+            elStyle.transition = '0.4s ease';
+        }
+        this.isHorizontal = elStyle.flexDirection.indexOf('row') > -1;
+        let isHorizontal = parent && parent.isHorizontal;
         let Editor = widget && widget.editor || editors[value.type];
         if(Editor){
             widgetProps = { ...value.props, _onChange: this.onChange, _value: value }
@@ -241,20 +356,15 @@ export default class Layout extends React.PureComponent{
                         parent={this}
                     />
                 );
+                // children.push(
+                //     <ResizeHandle isHorizontal={ isHorizontal }/>
+                // )
             });
             children.push(
                 this.renderPlaceholder(lastIndex, true)
             )
         }
-        let elStyle = {
-            display: (isAdded && !isRendered) ? 'none' : 'flex',
-            flexDirection: 'column',
-            position: 'relative',
-            transition: '0.4s ease',
-            whiteSpace: 'nowrap',
-            ...value.layout
-        };
-        
+
         return (
             <div
                 ref={ el => this.el = el }
@@ -287,8 +397,16 @@ export default class Layout extends React.PureComponent{
                         bottom: 0,
                         border: isDraggedOver ? '2px solid #a22' : isSelected ? '2px solid #2a2' : isChildHovered ? '2px solid #22a' : 0,
                         background: isHovered ? 'rgba(32,32,176, 0.05)' : 'transparent',
-                        pointerEvents: 'none'}}>
-                        </div>
+                        pointerEvents: 'none'
+                    }}
+                >
+                </div>
+                <ResizeHandle 
+                    isVisible={ isChildHovered || isHovered }
+                    isHorizontal={ isHorizontal } 
+                    onStartResize={ this.onStartResize }
+                    onMouseEnter={ this.onMouseEnter }
+                />
             </div>
         );
     }

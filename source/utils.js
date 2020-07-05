@@ -50,6 +50,18 @@ function throttle(func, wait, options) {
     };
   };
 
+  const debounce = (callback, time) => {
+    let interval;
+    return (...args) => {
+      clearTimeout(interval);
+      interval = setTimeout(() => {
+        interval = null;
+        callback(...args);
+      }, time);
+    };
+  };
+  
+
 let utils = {
     typeOf,
     uuid(){
@@ -60,6 +72,7 @@ let utils = {
 		});
     },
     throttle,
+    debounce,
     getPath(key){
         if(typeof key === 'string'){
             key = key.split('/');

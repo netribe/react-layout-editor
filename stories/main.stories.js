@@ -118,7 +118,11 @@ class EditorStory extends React.Component{
                     body: {
                         layout: {
                             flexDirection: 'row',
-                            padding: '20px 10px'
+                            paddingTop: 20,
+                            paddingLeft: 10,
+                            paddingRight: 10,
+                            paddingBottom: 20,
+                            flexWrap: 'wrap'
                         },
                         props: {},
                         children: []

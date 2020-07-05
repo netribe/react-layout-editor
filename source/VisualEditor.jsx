@@ -6,6 +6,7 @@ export default class VisualEditor extends React.PureComponent{
     constructor(props){
         super(props);
         this.listeners = {};
+        this.layouts = {};
         this.placeholders = {};
         this.hovered = null;
         this.selected = null;
@@ -14,16 +15,26 @@ export default class VisualEditor extends React.PureComponent{
         this.onDragOver = utils.throttle(this.onDragOver, 100);
     }
     componentDidMount(){
+        document.body.addEventListener('mousemove', this.onMouseMove, false);
+        document.body.addEventListener('mouseup', this.stopResize, false);
+        document.body.addEventListener('mouseleave', this.stopResize, false);
+        window.addEventListener('blur', this.stopResize, false);
         this.el.addEventListener('dragleave', this.onDragLeave, false);
     }
     componentWillUnmount(){
+        document.body.removeEventListener('mousemove', this.onMouseMove, false);
+        document.body.removeEventListener('mouseup', this.stopResize, false);
+        document.body.removeEventListener('mouseleave', this.stopResize, false);
+        window.removeEventListener('blur', this.stopResize, false);
         this.el.removeEventListener('dragleave', this.onDragLeave, false);
     }
-    bind = (key, cb) => {
+    bind = (key, cb, element) => {
         this.listeners[key] = cb;
+        this.layouts[key] = element;
     };
     unbind = (key) => {
         delete this.listeners[key];
+        delete this.layouts[key];
     };
     applyListeners = (...args) => {
         let listener;
@@ -155,13 +166,73 @@ export default class VisualEditor extends React.PureComponent{
         }
     };
 
+    stopResize = () => {
+        this.resizing = null;
+    };
+
+    startResize = (key, e, isHorizontal) => {
+        let item = utils.get(this.props.value, utils.getPath(key));
+        let layoutElement = this.layouts[key];
+        this.resizing = {
+            key,
+            layout: item && item.layout,
+            box: layoutElement && layoutElement.el.getBoundingClientRect(),
+            isHorizontal,
+            start: {
+                x: e.clientX,
+                y: e.clientY,
+            }
+        }
+        this.applyListeners(key);
+    };
+
+    debouncedResize = utils.debounce((key, layout) => {
+        let { value, onChange } = this.props;
+        let path = utils.getPath(key);
+        path.push('layout');
+        let newValue = utils.set(value, path, layout);
+        onChange(newValue);
+    }, 1000);
+
+    resize = (e) => {
+        if(!this.resizing){ return; }
+        let { key, layout = {}, isHorizontal, box, start } = this.resizing;
+        let layoutElement = this.layouts[key];
+        if(layoutElement){
+            let el = layoutElement.el;
+            layout = { ...layout };
+            if(isHorizontal){
+                let diff = e.x - start.x;
+                layout.minWidth = Math.max(box.width + diff, 0);
+                el.style.minWidth = layout.minWidth + 'px';
+            }
+            else{
+                let diff = e.y - start.y;
+                layout.paddingBottom = Math.max((layout.paddingBottom || 0) + diff, 0);
+                el.style.paddingBottom = layout.paddingBottom + 'px';
+            }
+            this.debouncedResize(key, layout);
+        }
+    };
+
+    onMouseMove = (e) => {
+        if(this.resizing){
+            this.resize({ x: e.clientX, y: e.clientY })
+        }
+    };
+
+    
+
     isDraggedOver = () => {
         return this.lastDragOver && (this.lastDragOver > Date.now() - 300);
     };
     
-    onHover = (key) => {
+    onHover = (key, e) => {
         if(Array.isArray(key)){ key = key.join('/')};
         // this.draggedOver = null;
+        if(this.resizing){ 
+            return this.resize({ x: e.clientX, y: e.clientY }); 
+        }
         let oldKey = this.hovered;
         if(oldKey === key){ return; }
         this.hovered = key;
@@ -194,6 +265,15 @@ export default class VisualEditor extends React.PureComponent{
         if(this.isDropped){
             this.isDropped = false;
             return;
+        }
+        if(this.childDeletedTime){
+            // wait for the deleted child to be visually removed
+            if(this.childDeletedTime > (Date.now() - 500)){
+                return;
+            }
+            else{
+                this.childDeletedTime = null;
+            }
         }
         if(Array.isArray(key)){ key = key.join('/')};
         let oldKey = this.draggedOver;
@@ -285,6 +365,13 @@ export default class VisualEditor extends React.PureComponent{
         this.onHover(newKey, newChild);
     };
 
+    setWidget = (widgetKey, widget) => {
+        let { value, onChange } = this.props;
+        let path = utils.getPath(widgetKey);
+        let newValue = utils.set(value, path, widget);
+        onChange && onChange(newValue);
+    };
+
     deleteChild = (childKey) => {
         let { value, onChange } = this.props;
         let path = utils.getPath(childKey);
@@ -294,6 +381,7 @@ export default class VisualEditor extends React.PureComponent{
         let newValue = utils.set(value, path, children);
         this.removed = childKey;
         this.applyListeners(childKey);
+        this.childDeletedTime = Date.now();
         onChange && setTimeout(e => onChange(newValue), 440)
     };
 
@@ -324,6 +412,12 @@ export default class VisualEditor extends React.PureComponent{
         setTimeout(e => this.onDragOver(null), 100)
     }
 
+    onKeyDown = (e) => {
+        if(e.keyCode === 46){
+            this.deleteChild(this.selected);
+        }
+    };
+
     render(){
         top.editor = this;
         let { value, onChange, widgets, editors, style } = this.props;
@@ -332,6 +426,8 @@ export default class VisualEditor extends React.PureComponent{
                 ref={ el => this.el = el } 
                 style={{ height: '100%', width: '100%', position: 'relative', display: 'flex', overflow: 'auto', ...style }}
                 onDrop={ this.onDrop }
+                onKeyDown={ this.onKeyDown }
+                tabIndex={-1}
             >
                 <Layout 
                     value={ value } 

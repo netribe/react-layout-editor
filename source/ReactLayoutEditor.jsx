@@ -1,9 +1,8 @@
 import React from 'react';
 import VisualEditor from './VisualEditor.jsx';
-import PropsEditor from './PropsEditor.jsx';
+import WidgetEditor from './WidgetEditor.jsx';
 import AddWidgetPanel from './AddWidgetPanel.jsx';
 import utils from './utils.js';
-import editors from './editors';
 
 export default class ReactLayoutEditor extends React.PureComponent{
     constructor(props){
@@ -14,31 +13,19 @@ export default class ReactLayoutEditor extends React.PureComponent{
             selectedSchema: null
         };
     }
-    onSelectComponent = (key, item) => {
-        let { widgets } = this.props;
-        let schema = (widgets.find(w => w.id === item.type) || {}).props;
+    select = (key = null) => {
+        let { widgets, value } = this.props;
+        let item = key ? utils.get(value, utils.getPath(key)) : null;
+        let schema = item ? (widgets.find(w => w.id === item.type) || {}).props : null;
         this.setState({
             selectedKey: key,
             selectedItem: item,
-            selectedSchema: schema || null,
+            selectedSchema: schema,
         });
     };
-    setProps = (props) => {
+    setWidget = (widget) => {
         let { selectedKey } = this.state;
-        let { value, onChange } = this.props;
-        let path = selectedKey.split('/');
-        let fullPath = [];
-        path.map((id, i) => {
-            if(i > 0){
-                fullPath.push({id});
-            }
-            if(i < path.length - 1){
-                fullPath.push('children');
-            }
-        });
-        fullPath.push('props');
-        let newValue = utils.set(value, fullPath, props);
-        onChange && onChange(newValue);
+        this.visualEditor.setWidget(selectedKey, widget);
     };
     deleteChild = () => {
         let { selectedKey } = this.state;
@@ -58,13 +45,13 @@ export default class ReactLayoutEditor extends React.PureComponent{
                     onChange={ onChange } 
                     widgets={ widgets }
                     // editors={ editors }
-                    onSelect={ this.onSelectComponent }
+                    onSelect={ this.select }
                 />
                 <div style={{ width: 200, borderLeft: '1px solid #ddd' }}>
-                    <PropsEditor
+                    <WidgetEditor
                         schema={ selectedSchema }
-                        value={ selectedItem?.props || {} }
-                        onChange={ this.setProps }
+                        value={ selectedItem || {} }
+                        onChange={ this.setWidget }
                         onDelete={ this.deleteChild }
                         inputs={ inputs }
                     />
