@@ -1,19 +1,8 @@
 import React from 'react';
 
 export default class Title extends React.Component {
-    constructor(props) {
-        super(props);
-
-
-    }
-
     render() {
-        const { children, ...props } = this.props;
-
-        return (
-            <h1 {...props}>
-                {children}
-            </h1>
-        )
+        const { children, element = 'h1', ...props } = this.props;
+        return React.createElement(element, props, ...children);
     }
 }

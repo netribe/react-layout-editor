@@ -1,5 +1,5 @@
 import React from 'react';
-import VisualEditor from './VisualEditor.jsx';
+import VisualEditor from './VisualEditor';
 import WidgetEditor from './WidgetEditor.jsx';
 import AddWidgetPanel from './AddWidgetPanel.jsx';
 import utils from './utils.js';

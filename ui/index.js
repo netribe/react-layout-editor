@@ -7,6 +7,7 @@ import Text from './Text.jsx';
 import Row from './Row.jsx';
 import Column from './Column.jsx';
 import Scroll from './Scroll.jsx';
+import Section from './Section.jsx';
 
 export {
     Button,
@@ -17,5 +18,6 @@ export {
     Text,
     Row,
     Column,
-    Scroll
+    Scroll,
+    Section
 }

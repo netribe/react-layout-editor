@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from './Layout.jsx';
-import utils from './utils';
+import utils from '../utils';
 
 export default class VisualEditor extends React.PureComponent{
     constructor(props){
