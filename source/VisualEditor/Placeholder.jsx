@@ -46,7 +46,7 @@ export default class Placeholder extends React.Component{
                  ref={el => this.el = el}
             >
                 {isButton ? (
-                    <div style={{ lineHeight: '14px', position: 'relative', top: -1, color: '#fff' }}>
+                    <div style={{ lineHeight: '14px', position: 'relative', top: -1, color: '#fff', fontSize: '16px' }}>
                         +
                     </div>
                 ) : null}
