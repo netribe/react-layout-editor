@@ -4,6 +4,9 @@ import Image from './Image.jsx';
 import Paragraph from './Paragraph.jsx';
 import Title from './Title.jsx';
 import Text from './Text.jsx';
+import Row from './Row.jsx';
+import Column from './Column.jsx';
+import Scroll from './Scroll.jsx';
 
 export {
     Button,
@@ -11,5 +14,8 @@ export {
     Image,
     Paragraph,
     Title,
-    Text
+    Text,
+    Row,
+    Column,
+    Scroll
 }

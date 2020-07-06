@@ -321,8 +321,9 @@ export default class Layout extends React.PureComponent{
         if(!editor.resizing){
             elStyle.transition = '0.4s ease';
         }
-        this.isHorizontal = elStyle.flexDirection.indexOf('row') > -1;
+        this.isHorizontal = elStyle.flexDirection.indexOf('row') > -1 || value.isHorizontal;
         let isHorizontal = parent && parent.isHorizontal;
+        let shouldResize = !(value.resize === false);
         let Editor = widget && widget.editor || editors[value.type];
         if(Editor){
             widgetProps = { ...value.props, _onChange: this.onChange, _value: value }
@@ -401,12 +402,16 @@ export default class Layout extends React.PureComponent{
                     }}
                 >
                 </div>
-                <ResizeHandle 
-                    isVisible={ isChildHovered || isHovered }
-                    isHorizontal={ isHorizontal } 
-                    onStartResize={ this.onStartResize }
-                    onMouseEnter={ this.onMouseEnter }
-                />
+                {
+                    shouldResize ?
+                    <ResizeHandle 
+                        isVisible={ isChildHovered || isHovered }
+                        isHorizontal={ isHorizontal } 
+                        onStartResize={ this.onStartResize }
+                        onMouseEnter={ this.onMouseEnter }
+                    />
+                    : null 
+                }
             </div>
         );
     }

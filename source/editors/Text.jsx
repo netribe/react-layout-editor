@@ -6,14 +6,12 @@ export default class Text extends React.Component {
     }
 
     componentDidMount(){
-        console.log(8)
         this.value = this.props.value;
         this.el.innerHTML = this.value;
     }
     
     componentDidUpdate(){
         if(this.props.value !== this.value){
-            console.log(2)
             this.el.innerHTML = this.props.value;
         }
     }

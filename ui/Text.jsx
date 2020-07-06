@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class Title extends React.Component {
+export default class Text extends React.Component {
     constructor(props) {
         super(props);
     }

@@ -40,6 +40,8 @@ class EditorStory extends React.Component{
         this.state = {
             value: {
                 id: '1',
+                type: 'Scroll',
+                resize: false,
                 layout: {
                     flex: 1
                 },
@@ -113,33 +115,42 @@ class EditorStory extends React.Component{
                     ]
                 },
                 {
-                    id: 'Row',
-                    label: 'Row',
+                    id: 'Scroll',
+                    label: 'Scroll',
                     body: {
+                        type: 'Scroll',
                         layout: {
-                            flexDirection: 'row',
-                            paddingTop: 20,
-                            paddingLeft: 10,
-                            paddingRight: 10,
-                            paddingBottom: 20,
-                            flexWrap: 'wrap'
+                            flex: 1
                         },
                         props: {},
                         children: []
                     },
+                    component: ui.Scroll,
+                    props: []
+                },
+                {
+                    id: 'Row',
+                    label: 'Row',
+                    body: {
+                        type: 'Row',
+                        isHorizontal: true,
+                        layout: {},
+                        props: {},
+                        children: []
+                    },
+                    component: ui.Row,
                     props: []
                 },
                 {
                     id: 'Column',
                     label: 'Column',
                     body: {
-                        layout: {
-                            flexDirection: 'column',
-                            padding: '20px 10px'
-                        },
+                        type: 'Column',
+                        layout: {},
                         props: {},
                         children: []
                     },
+                    component: ui.Column,
                     props: []
                 },
                 {
@@ -175,7 +186,8 @@ class EditorStory extends React.Component{
                     body: {
                         type: 'Divider',
                         layout: {
-                            padding: '10px 0'
+                            paddingTop: 10,
+                            paddingBottom: 10
                         },
                         props: {
                             variant: 'fullWidth'

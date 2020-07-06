@@ -42,11 +42,7 @@ export default class WidgetEditor extends React.PureComponent{
                     {
                         tab === 'props' ? (
                             <div style={{ display: 'flex', flexDirection: 'column', padding: 10 }}>
-                                { schema.length ? 
-                                    (
-                                        <button onClick={ onDelete }>Delete</button>
-                                    ) : null
-                                }
+                                <button onClick={ onDelete }>Delete</button>
                                 {
                                     schema.map((item, i) => {
                                         let Input = inputs[item.type];
